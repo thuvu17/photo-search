@@ -1,8 +1,6 @@
 import boto3
-from botocore.vendored import requests
+import requests
 from aws_requests_auth.aws_auth import AWSRequestsAuth
-import json
-from botocore.exceptions import ClientError
 
 
 def lambda_handler(event, context):
@@ -44,15 +42,16 @@ def lambda_handler(event, context):
         region = "us-east-1"
         service = "es"
 
-        access_key = "AKIAWZFOPVUAV2O7CNW5"
-        secret_key = "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"
+        session = boto3.Session()
+        credentials = session.get_credentials()
 
         auth = AWSRequestsAuth(
-            aws_access_key=access_key,
-            aws_secret_access_key=secret_key,
+            aws_access_key=credentials.access_key,
+            aws_secret_access_key=credentials.secret_key,
             aws_host=host,
             aws_region=region,
             aws_service=service,
+            aws_token=credentials.token,
         )
 
         query = {"query": {"bool": {"should": match_query, "minimum_should_match": 1}}}
