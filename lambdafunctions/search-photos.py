@@ -1,68 +1,59 @@
 import boto3
+import uuid
+import json
 import requests
-from aws_requests_auth.aws_auth import AWSRequestsAuth
+from requests_aws4auth import AWS4Auth
 
 
 def lambda_handler(event, context):
-    # Extract the user input text from the input event
-    user_input = "show me dogs"
-
-    # Lex bot
+    user_id = str(uuid.uuid4())
+    query = event.get("queryStringParameters", {}).get("q")
+    print(f"Query: {query}")
     lex = boto3.client("lexv2-runtime", region_name="us-east-1")
-
-    # Invoke the Lex v2 bot with the user input
-    bot_id = "4G2QTRTNLS"
-    bot_alias_id = "TSTALIASID"
-    locale_id = "en_US"
-
-    response = lex.recognize_text(
-        botId=bot_id,
-        botAliasId=bot_alias_id,
-        localeId=locale_id,
-        sessionId="abc1234",
-        text=user_input,
+    lex_response = lex.recognize_text(
+        botId="4G2QTRTNLS",
+        botAliasId="TSTALIASID",
+        localeId="en_US",
+        sessionId=user_id,
+        text=query,
     )
-
-    if "sessionState" in response:
-        # Get keywords
-        message = response["sessionState"]["intent"]["slots"]["Keyword"]["values"]
-        keywords = []
-        match_query = []
-        for i in range(len(message)):
-            keywords.append(message[i]["value"]["interpretedValue"])
-            match_query.append({"term": {"labels": keywords[i]}})
-        # return match_query
-
-        # Query ElasticSearch
-        index = "photos"
-        host = "search-photos1-hwrbp5mxflgqrrzwku2dllowjm.us-east-1.es.amazonaws.com"
-        url = "https://" + host + "/" + index + "/_search/"
-
-        headers = {"Content-Type": "application/json"}
-        region = "us-east-1"
-        service = "es"
-
-        session = boto3.Session()
-        credentials = session.get_credentials()
-
-        auth = AWSRequestsAuth(
-            aws_access_key=credentials.access_key,
-            aws_secret_access_key=credentials.secret_key,
-            aws_host=host,
-            aws_region=region,
-            aws_service=service,
-            aws_token=credentials.token,
+    keywords = []
+    if "Keyword" in lex_response["sessionState"]["intent"]["slots"]:
+        keyword_values = lex_response["sessionState"]["intent"]["slots"]["Keyword"][
+            "values"
+        ]
+        for value in keyword_values:
+            keywords.append(value["value"]["interpretedValue"])
+    print(f"Lex response: {keywords}")
+    query_body = {
+        "query": {
+            "bool": {"should": [{"match": {"labels": keyword}} for keyword in keywords]}
+        }
+    }
+    credentials = boto3.Session().get_credentials()
+    awsauth = AWS4Auth(
+        credentials.access_key,
+        credentials.secret_key,
+        "us-east-1",
+        "es",
+        session_token=credentials.token,
+    )
+    host = "search-photos1-hwrbp5mxflgqrrzwku2dllowjm.us-east-1.es.amazonaws.com"
+    url = "https://" + host + "/photos/_search/"
+    headers = {"Content-Type": "application/json"}
+    es_response = requests.get(
+        url, auth=awsauth, headers=headers, data=json.dumps(query_body)
+    ).json()
+    print(f"ES response: {es_response}")
+    hits = es_response["hits"]["hits"]
+    photos = []
+    for hit in hits:
+        photo_data = hit["_source"]
+        photo_url = "https://{}.s3.amazonaws.com/{}".format(
+            photo_data["bucket"], photo_data["objectKey"]
         )
-
-        query = {"query": {"bool": {"should": match_query, "minimum_should_match": 1}}}
-
-        headers = {"Content-Type": "application/json"}
-
-        response = requests.get(url, auth=auth, headers=headers, json=query)
-        return response.json()
-        hits = response.json()["hits"]["hits"]
-        return_photos = [hit["_source"]["keyword"] for hit in hits]
-
-        return return_photos
-
-    return {"statusCode": 500, "body": "No response from Lex!"}
+        photo_labels = photo_data["labels"]
+        photos.append({"url": photo_url, "labels": photo_labels})
+    response = {"statusCode": 200, "body": json.dumps({"results": photos})}
+    print(response)
+    return response
