@@ -5,22 +5,10 @@ import requests
 from requests_aws4auth import AWS4Auth
 
 
-def extract_keywords(lex_response):
-    keywords = []
-    if "Keyword" in lex_response["sessionState"]["intent"]["slots"]:
-        keyword_values = lex_response["sessionState"]["intent"]["slots"]["Keyword"][
-            "values"
-        ]
-        for value in keyword_values:
-            keywords.append(value["value"]["interpretedValue"])
-    return keywords
-
-
 def lambda_handler(event, context):
     user_id = str(uuid.uuid4())
     query = event.get("queryStringParameters", {}).get("q")
     print(f"Query: {query}")
-
     lex = boto3.client("lexv2-runtime", region_name="us-east-1")
     lex_response = lex.recognize_text(
         botId="4G2QTRTNLS",
@@ -29,9 +17,14 @@ def lambda_handler(event, context):
         sessionId=user_id,
         text=query,
     )
-    keywords = extract_keywords(lex_response)
+    keywords = []
+    if "Keyword" in lex_response["sessionState"]["intent"]["slots"]:
+        keyword_values = lex_response["sessionState"]["intent"]["slots"]["Keyword"][
+            "values"
+        ]
+        for value in keyword_values:
+            keywords.append(value["value"]["interpretedValue"])
     print(f"Lex response: {keywords}")
-
     query_body = {
         "query": {
             "bool": {"should": [{"match": {"labels": keyword}} for keyword in keywords]}
