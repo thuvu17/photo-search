@@ -46,6 +46,10 @@ paths:
       produces:
         - application/json
       parameters:
+        - in: header
+          name: x-amz-meta-customLabels
+          type: string
+          description: Custom labels for the uploaded photo
         - in: body
           name: file
           required: true
