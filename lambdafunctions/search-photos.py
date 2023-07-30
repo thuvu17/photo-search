@@ -1,37 +1,57 @@
-# import boto3
+import boto3
+import uuid
+import json
+
 # import requests
 # from aws_requests_auth.aws_auth import AWSRequestsAuth
 
 
+def extract_keywords(lex_response):
+    keywords = []
+    if "Keyword" in lex_response["sessionState"]["intent"]["slots"]:
+        keyword_values = lex_response["sessionState"]["intent"]["slots"]["Keyword"][
+            "values"
+        ]
+        for value in keyword_values:
+            keywords.append(value["value"]["interpretedValue"])
+    return keywords
+
+
 def lambda_handler(event, context):
-    query_param = event.get("queryStringParameters", {}).get("q")
+    user_id = str(uuid.uuid4())
+    query = event.get("queryStringParameters", {}).get("q")
+    print(f"Query: {query}")
+    lex = boto3.client("lexv2-runtime", region_name="us-east-1")
+    lex_response = lex.recognize_text(
+        botId="4G2QTRTNLS",
+        botAliasId="TSTALIASID",
+        localeId="en_US",
+        sessionId=user_id,
+        text=query,
+    )
+    keywords = extract_keywords(lex_response)
+    print("Lex response: ", keywords)
+    # intents = lex_response.get("messages", [])
+    # slots = {
+    #     slot["name"]: slot["value"]["interpretedValue"]
+    #     for message in intents
+    #     for slot in message.get("slots", [])
+    #     if slot["shape"] == "Scalar"
+    # }
 
-    if query_param:
-        return {
-            "statusCode": 200,
-            "body": f'The query parameter "q" was "{query_param}"',
-        }
-    else:
-        return {"statusCode": 400, "body": 'No query parameter "q" provided'}
-
-    # # Extract the user input text from the input event
-    # user_input = "show me dogs"
-
+    return {
+        "statusCode": 200,
+        "body": json.dumps(
+            {
+                "message": keywords,
+            }
+        ),
+    }
     # # Lex bot
-    # lex = boto3.client("lexv2-runtime", region_name="us-east-1")
 
     # # Invoke the Lex v2 bot with the user input
     # bot_id = "4G2QTRTNLS"
-    # bot_alias_id = "TSTALIASID"
-    # locale_id = "en_US"
-
-    # response = lex.recognize_text(
-    #     botId=bot_id,
-    #     botAliasId=bot_alias_id,
-    #     localeId=locale_id,
-    #     sessionId="abc1234",
-    #     text=user_input,
-    # )
+    # bot_alias_id =     # locale_id = ""
 
     # if "sessionState" in response:
     #     # Get keywords
