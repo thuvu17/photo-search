@@ -2,7 +2,7 @@ import boto3
 import uuid
 import json
 import requests
-from aws_requests_auth.aws_auth import AWSRequestsAuth
+from requests_aws4auth import AWS4Auth
 
 
 def extract_keywords(lex_response):
@@ -48,15 +48,19 @@ def lambda_handler(event, context):
     host = "search-photos1-hwrbp5mxflgqrrzwku2dllowjm.us-east-1.es.amazonaws.com"
     url = "https://" + host + "/photos/_search/"
     headers = {"Content-Type": "application/json"}
-    response = requests.get(
+    es_response = requests.get(
         url, auth=awsauth, headers=headers, data=json.dumps(query_body)
-    )
-    print(response.json())
-    return {
-        "statusCode": 200,
-        "body": json.dumps(
-            {
-                "message": keywords,
-            }
-        ),
-    }
+    ).json()
+    print(f"ES response: {es_response}")
+    hits = es_response["hits"]["hits"]
+    photos = []
+    for hit in hits:
+        photo_data = hit["_source"]
+        photo_url = "https://{}.s3.amazonaws.com/{}".format(
+            photo_data["bucket"], photo_data["objectKey"]
+        )
+        photo_labels = photo_data["labels"]
+        photos.append({"url": photo_url, "labels": photo_labels})
+    response = {"statusCode": 200, "body": json.dumps({"results": photos})}
+    print(response)
+    return response
