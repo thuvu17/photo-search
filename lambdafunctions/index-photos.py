@@ -5,7 +5,6 @@ import requests
 
 
 def lambda_handler(event, context):
-    labels = custom_labels + detected_labels
     try:
         bucket = event["Records"][0]["s3"]["bucket"]["name"]
         key = event["Records"][0]["s3"]["object"]["key"]
