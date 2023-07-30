@@ -19,7 +19,7 @@ def check_document_format(doc):
 
     # Check if 'createdTimestamp' is a string and can be converted to a datetime object
     try:
-        datetime.datetime.strptime(doc["createdTimestamp"], "%Y-%m-%dT%H:%M:%S")
+        datetime.datetime.strptime(doc["createdTimestamp"], "%Y-%m-%d %H:%M:%S")
     except ValueError:
         return False
 
