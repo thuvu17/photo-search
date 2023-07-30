@@ -26,6 +26,7 @@ def lambda_handler(event, context):
         "createdTimestamp": response["LastModified"].strftime("%Y-%m-%d %H:%M:%S"),
         "labels": labels,
     }
+    print(f"Processing image metadata: {image_metadata}")
     region = "us-east-1"
     service = "es"
     credentials = boto3.Session().get_credentials()
@@ -40,4 +41,9 @@ def lambda_handler(event, context):
     host = "search-photos1-hwrbp5mxflgqrrzwku2dllowjm.us-east-1.es.amazonaws.com"
     url = "https://" + host + "/" + index + "/_doc/"
     headers = {"Content-Type": "application/json"}
-    requests.post(url, auth=awsauth, json=image_metadata, headers=headers)
+    response = requests.post(url, auth=awsauth, json=image_metadata, headers=headers)
+    print(f"Response status code: {response.status_code}")
+    if response.status_code in range(200, 299):
+        print("Successfully uploaded to Elasticsearch")
+    else:
+        print("Failed to upload to Elasticsearch")
