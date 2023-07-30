@@ -73,6 +73,7 @@ if __name__ == "__main__":
     for doc_id in incorrect_docs + duplicate_docs:
         proceed = input(f"Proceed with deletion of document {doc_id}? (y/n): ")
         if proceed.lower() == "y":
+            url = f"https://{host}/photos/_doc/{doc_id}"
             response = requests.delete(url, auth=awsauth)
             if response.status_code == 200:
                 print(f"Successfully deleted document {doc_id}")
