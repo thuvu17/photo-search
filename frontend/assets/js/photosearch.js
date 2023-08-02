@@ -1,18 +1,4 @@
 // GET keyword
-
-// document.getElementById("getKeywordForm").addEventListener("submit", function(event) {
-//   event.preventDefault(); // Prevent the form from submitting via HTTP
-
-//   // Get form value
-//   var keyword = document.getElementById("keyword").value;
-
-//   // Do something with the form data
-//   console.log(keyword);
-//   return sdk.searchPhotos({q: keyword}, {}, {});
-// });
-
-// Replace 'your_query' with the actual search query you want to use
-
 document.getElementById("getKeywordForm").addEventListener("submit", function(event) {
   event.preventDefault(); // Prevent the form from submitting via HTTP
 
@@ -32,7 +18,8 @@ document.getElementById("getKeywordForm").addEventListener("submit", function(ev
   })
   .then(data => {
     // Handle the response data here
-    console.log('API Response:', data);
+    console.log('API Response:', data['results'][0]['url']);
+    returnUrl = data['results'][0]['url'];
   })
   .catch(error => {
     // Handle any errors here
