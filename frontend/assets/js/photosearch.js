@@ -1,5 +1,18 @@
 // GET keyword
 
+// document.getElementById("getKeywordForm").addEventListener("submit", function(event) {
+//   event.preventDefault(); // Prevent the form from submitting via HTTP
+
+//   // Get form value
+//   var keyword = document.getElementById("keyword").value;
+
+//   // Do something with the form data
+//   console.log(keyword);
+//   return sdk.searchPhotos({q: keyword}, {}, {});
+// });
+
+// Replace 'your_query' with the actual search query you want to use
+
 document.getElementById("getKeywordForm").addEventListener("submit", function(event) {
   event.preventDefault(); // Prevent the form from submitting via HTTP
 
@@ -7,9 +20,29 @@ document.getElementById("getKeywordForm").addEventListener("submit", function(ev
   var keyword = document.getElementById("keyword").value;
 
   // Do something with the form data
-  console.log(keyword);
-  return sdk.searchGet({q: keyword}, {}, {});
+  const searchQuery = keyword;
+  const apiUrl = `https://24x5cq0m0i.execute-api.us-east-1.amazonaws.com/dev/search?q=${encodeURIComponent(searchQuery)}`;
+  fetch(apiUrl)
+  .then(response => {
+    // Check if the response status is OK (200) before proceeding
+    if (!response.ok) {
+      throw new Error('Network response was not ok');
+    }
+    return response.json(); // Assuming the response is in JSON format
+  })
+  .then(data => {
+    // Handle the response data here
+    console.log('API Response:', data);
+  })
+  .catch(error => {
+    // Handle any errors here
+    console.error('API Error:', error);
+  });
 });
+
+// Construct the API URL with the search query as a parameter
+
+// Make the GET request using Fetch API
 
 
   // Add an event listener to the submit button
@@ -60,14 +93,3 @@ document.getElementById("getKeywordForm").addEventListener("submit", function(ev
 
 //   return sdk.uploadPut(formData)
 // });
-
-document.getElementById("getKeywordForm").addEventListener("submit", function(event) {
-  event.preventDefault(); // Prevent the form from submitting via HTTP
-
-  // Get form value
-  var keyword = document.getElementById("keyword").value;
-
-  // Do something with the form data
-  console.log(keyword);
-  return sdk.searchGet({q: keyword}, {}, {});
-});
