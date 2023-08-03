@@ -143,8 +143,96 @@
 
   <div class="album py-5 bg-body-tertiary">
     <div class="container">
-        <img id="photoImage" src="" alt="Photo">
-        <p id="no-result-message"></p>
+
+      <p id="no-result-message"></p>
+
+      <ul id="imageList">
+      </ul>
+
+      <script>
+        var searchQuery = "";
+        var apiUrl = `https://24x5cq0m0i.execute-api.us-east-1.amazonaws.com/dev/search?q=your_query`;
+        
+        document.getElementById("getKeywordForm").addEventListener("submit", function(event) {
+            event.preventDefault(); // Prevent the form from submitting via HTTP
+
+            // Get form value
+            var keyword = document.getElementById("keyword").value;
+
+            // Do something with the form data
+            searchQuery = keyword;
+            apiUrl = `https://24x5cq0m0i.execute-api.us-east-1.amazonaws.com/dev/search?q=${encodeURIComponent(searchQuery)}`;
+            fetch(apiUrl)
+            .then(response => {
+              // Check if the response status is OK (200) before proceeding
+              if (!response.ok) {
+                throw new Error('Network response was not ok');
+              }
+              return response.json(); // Assuming the response is in JSON format
+            })
+            .then(data => {
+              // Handle the response data here
+              console.log('API Response:', data['results']);
+              document.getElementById("imageList").innerHTML = '';
+              if (data['results'].length === 0) {
+                document.getElementById('no-result-message').innerHTML = "No results found";
+              } else {
+                var imageList = document.getElementById("imageList");
+                imageList.innerHTML = '';
+                console.log(apiUrl);
+                for (let i = 0; i < data['results'].length; i++) {
+                  const listItem = document.createElement("li");
+                  const imageElement = document.createElement("img");
+                  imageElement.src = data['results'][i]['url'];
+                  imageElement.alt = "Image";
+                  listItem.appendChild(imageElement);
+                  imageList.appendChild(listItem);
+                }
+              }
+              
+            })
+            .catch(error => {
+              // Handle any errors here
+              console.error('API Error:', error);
+            });
+            });
+
+        fetch(apiUrl)
+          .then(response => {
+            // Check if the response status is OK (200) before proceeding
+            if (!response.ok) {
+              throw new Error('Network response was not ok');
+            }
+            return response.json(); // Assuming the response is in JSON format
+          })
+          .then(data => {
+            // Handle the response data here
+            console.log('API Response:', data['results']);
+            if (data['results'].length === 0) {
+              document.getElementById('no-result-message').innerHTML = "No results found";
+            } else {
+              var imageList = document.getElementById("imageList");
+              imageList.innerHTML = '';
+              console.log(apiUrl);
+              for (let i = 0; i < data['results'].length; i++) {
+                const listItem = document.createElement("li");
+                const imageElement = document.createElement("img");
+                imageElement.src = data['results'][i]['url'];
+                imageElement.alt = "Image";
+                listItem.appendChild(imageElement);
+                imageList.appendChild(listItem);
+              }
+            }
+            
+          })
+          .catch(error => {
+            // Handle any errors here
+            console.error('API Error:', error);
+          });
+      </script>
+
+        <!-- <img id="photoImage" src="" alt="Photo">
+        
         <script>
           document.getElementById("getKeywordForm").addEventListener("submit", function(event) {
             event.preventDefault(); // Prevent the form from submitting via HTTP
@@ -170,6 +258,7 @@
                 document.getElementById('no-result-message').innerHTML = "No results found";
               } else {
                 returnUrl = data['results'][0]['url'];
+                console.log(data['results']);
                 document.getElementById('photoImage').src = returnUrl;
               }
               
@@ -179,7 +268,7 @@
               console.error('API Error:', error);
             });
           });
-        </script>
+        </script> -->
 
     <section class="py-5 text-center container">
       <div class="row py-lg-5">
