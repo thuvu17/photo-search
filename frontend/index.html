@@ -197,8 +197,8 @@
             document.getElementById('uploadImageForm').addEventListener('submit', function (event) {
               event.preventDefault();
               var file = document.getElementById('imageInput').files[0];
-              var customLabels = document.getElementById("customLabels");
-              // console.log(customLabels.value);
+              var customLabels = document.getElementById("customLabels").value.split(',');
+              console.log(customLabels);
               var reader = new FileReader();
               var body;
               var headers;
@@ -206,30 +206,25 @@
               reader.onload = function (event) {//
                   // var body = btoa(event.target.result.replace(/^data:(.*;base64,)?/, ''));
                   body = event.target.result;
-                  console.log(body);
                   // console.log(file.type);
                   headers = {
-                    'file': file.type,
-                    'x-amz-meta-customLabels': customLabels.value,
-                    'Content-Type':'image/jpeg'
+                    // 'file': file.type,
+                    'x-amz-meta-customLabels': customLabels
                   };
+                  var url = `https://24x5cq0m0i.execute-api.us-east-1.amazonaws.com/dev/upload?labels=${encodeURIComponent(customLabels)}`;
+                  fetch(url, {
+                        method: 'POST',
+                        // header: headers,
+                        body: body
+                      })
+                      .then(data => {
+                      // Handle the response data here
+                      console.log('API Response:', data['results']);
+                      })
+                      .catch(error => {
+                          console.error('Error:', error);
+                      });
               }
-              var url = 'https://24x5cq0m0i.execute-api.us-east-1.amazonaws.com/dev/upload';
-              fetch(url, {
-                    method: 'PUT',
-                    headers: headers,
-                    body: body
-                  })
-                  .then(response => {
-                      if (response.ok) {
-                          alert('File uploaded successfully!');
-                      } else {
-                          alert('Error uploading file.');
-                      }
-                  })
-                  .catch(error => {
-                      console.error('Error:', error);
-                  });
               reader.readAsDataURL(file);
             }, false);
           </script>
