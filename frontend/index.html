@@ -132,6 +132,10 @@
               <input id="postSubmit" type="submit" value="Search">
               <br></br>
           </form> 
+          <div class="voiceToText">
+            <button id="postSubmit" type="button">Voice To Text</button>
+            <script type="text/JavaScript" src="assets/js/voice-webkit.js"></script>
+          </div>
           </p>
         </div>
       </div>
@@ -180,12 +184,54 @@
     <section class="py-5 text-center container">
       <div class="row py-lg-5">
         <div class="col-lg-6 col-md-8 mx-auto">
+
           <h1 class="fw-light">Upload Image</h1>
+
           <form id="uploadImageForm" enctype="multipart/form-data">
             <input type="text" id="customLabels" name="customLabels" placeholder="Your custom labels"><br></br>
             <input type="file" id="imageInput" name="imageInput" accept="image/*">
             <button id="postSubmit" type="submit">Upload</button>
           </form>
+
+          <script>
+            document.getElementById('uploadImageForm').addEventListener('submit', function (event) {
+              event.preventDefault();
+              var file = document.getElementById('imageInput').files[0];
+              var customLabels = document.getElementById("customLabels");
+              // console.log(customLabels.value);
+              var reader = new FileReader();
+              var body;
+              var headers;
+
+              reader.onload = function (event) {//
+                  // var body = btoa(event.target.result.replace(/^data:(.*;base64,)?/, ''));
+                  body = event.target.result;
+                  console.log(body);
+                  // console.log(file.type);
+                  headers = {
+                    'file': file.type,
+                    'x-amz-meta-customLabels': customLabels.value,
+                  };
+              }
+              var url = 'https://24x5cq0m0i.execute-api.us-east-1.amazonaws.com/dev/upload';
+              fetch(url, {
+                    method: 'PUT',
+                    headers: headers,
+                    body: body
+                  })
+                  .then(response => {
+                      if (response.ok) {
+                          alert('File uploaded successfully!');
+                      } else {
+                          alert('Error uploading file.');
+                      }
+                  })
+                  .catch(error => {
+                      console.error('Error:', error);
+                  });
+              reader.readAsDataURL(file);
+            }, false);
+          </script>
         </div>
       </div>
     </section>
