@@ -5,20 +5,25 @@ import requests
 from requests_aws4auth import AWS4Auth
 
 
+def response(status_code, body):
+    return {
+        "statusCode": status_code,
+        "headers": {
+            "Access-Control-Allow-Headers": "*",
+            "Access-Control-Allow-Origin": "*",
+            "Access-Control-Allow-Methods": "*",
+        },
+        "body": json.dumps(body),
+    }
+
+
 def lambda_handler(event, context):
     query_params = event.get("queryStringParameters")
     if not query_params:
-        return {
-            "statusCode": 403,
-            "body": json.dumps({"code": 403, "message": "Missing query parameters"}),
-        }
+        return response(403, {"code": 403, "message": "Missing query parameters"})
     query = query_params.get("q")
     if not query:
-        return {
-            "statusCode": 403,
-            "body": json.dumps({"code": 403, "message": "Missing query string"}),
-        }
-
+        return response(403, {"code": 403, "message": "Missing query string"})
     try:
         lex = boto3.client("lexv2-runtime", region_name="us-east-1")
         user_id = str(uuid.uuid4())
@@ -30,13 +35,7 @@ def lambda_handler(event, context):
             text=query,
         )
     except Exception as e:
-        return {
-            "statusCode": 500,
-            "body": json.dumps(
-                {"code": 500, "message": f"Failed to call Lex: {str(e)}"}
-            ),
-        }
-
+        return response(500, {"code": 500, "message": f"Failed to call Lex: {str(e)}"})
     try:
         keyword_values = (
             lex_response.get("sessionState", {})
@@ -46,16 +45,13 @@ def lambda_handler(event, context):
             .get("values", [])
         )
     except Exception as e:
-        return {
-            "statusCode": 500,
-            "body": json.dumps(
-                {
-                    "code": 500,
-                    "message": f"Failed to extract keyword values from Lex response: {str(e)}",
-                }
-            ),
-        }
-
+        return response(
+            500,
+            {
+                "code": 500,
+                "message": f"Failed to extract keyword values from Lex response: {str(e)}",
+            },
+        )
     keywords = []
     for value in keyword_values:
         interpreted_value = value.get("value", {}).get("interpretedValue")
@@ -84,13 +80,9 @@ def lambda_handler(event, context):
             url, auth=awsauth, headers=headers, data=json.dumps(query_body)
         ).json()
     except Exception as e:
-        return {
-            "statusCode": 500,
-            "body": json.dumps(
-                {"code": 500, "message": f"Failed to call Elasticsearch: {str(e)}"}
-            ),
-        }
-
+        return response(
+            500, {"code": 500, "message": f"Failed to call Elasticsearch: {str(e)}"}
+        )
     hits = es_response.get("hits", {}).get("hits", [])
 
     photos = []
@@ -103,11 +95,8 @@ def lambda_handler(event, context):
             photo_labels = photo_data.get("labels", [])
             photos.append({"url": photo_url, "labels": photo_labels})
         except Exception as e:
-            return {
-                "statusCode": 500,
-                "body": json.dumps(
-                    {"code": 500, "message": f"Failed to process hit: {str(e)}"}
-                ),
-            }
+            return response(
+                500, {"code": 500, "message": f"Failed to process hit: {str(e)}"}
+            )
 
-    return {"statusCode": 200, "body": json.dumps({"results": photos})}
+    return response(200, {"results": photos})
