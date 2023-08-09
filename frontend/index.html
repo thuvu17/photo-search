@@ -34,6 +34,8 @@
 
     <script src="./assets/js/aws-sdk.min.js"></script>
 
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+
     
   </head>
 
@@ -131,10 +133,17 @@
               <input type="text" id="keyword" name="keyword" placeholder="e.g. dogs">
               <input id="postSubmit" type="submit" value="Search">
               <br></br>
-          </form> 
-          <div class="voiceToText">
-            <button id="postSubmit" type="button">Voice To Text</button>
-            <script type="text/JavaScript" src="assets/js/voice-webkit.js"></script>
+            </form>
+            <div class="voiceToText">
+              <form id = "searchVoiceForm">
+                <input type="text" id="search_query" name="search_query" placeholder="Search...">
+                <button id="voiceToTextButton" type="button">
+                  <i id="mic_search" class="material-icons">mic</i>
+                </button>
+                <input id="postSubmit" type="submit" value="Search"></input>
+              </form>
+              <div id="recognizedTextContainer"></div>
+            </div>
           </div>
           </p>
         </div>
@@ -317,6 +326,48 @@
               reader.readAsDataURL(file);
             }, false);
           </script>
+          <script>
+            document.getElementById("searchVoiceForm").addEventListener("submit", function(event) {
+              event.preventDefault(); // Prevent form submission
+
+              const searchText = document.getElementById("search_query").value;
+
+              if (searchText.trim() !== "") {
+                  const apiUrl = `https://24x5cq0m0i.execute-api.us-east-1.amazonaws.com/dev/search?q=${encodeURIComponent(searchText)}`;
+                  fetch(apiUrl)
+                      .then(response => {
+                          if (!response.ok) {
+                              throw new Error('Network response was not ok');
+                          }
+                          return response.json();
+                      })
+                      .then(data => {
+                          if (data['results'].length === 0) {
+                              document.getElementById('no-result-message').innerHTML = "No results found";
+                          } else {
+                              // Update the imageList with the search results
+                              var imageList = document.getElementById("imageList");
+                              imageList.innerHTML = '';
+                              for (let i = 0; i < data['results'].length; i++) {
+                                  const listItem = document.createElement("li");
+                                  const imageElement = document.createElement("img");
+                                  imageElement.src = data['results'][i]['url'];
+                                  imageElement.alt = "Image";
+                                  listItem.appendChild(imageElement);
+                                  imageList.appendChild(listItem);
+                              }
+                          }
+                      document.getElementById("searchVoiceForm").submit();
+                      })
+                      .catch(error => {
+                          console.error('API Error:', error);
+                      });
+              } else {
+                  alert("Please provide a search query.");
+              }
+            });
+
+          </script>
         </div>
       </div>
     </section>
@@ -343,5 +394,6 @@
     <!-- photosearch js -->
     <!-- <script src="./assets/js/photosearch.js"></script> -->
 
+    <script type="text/JavaScript" src="assets/js/voice-webkit.js"></script>
   </body>
 </html>
