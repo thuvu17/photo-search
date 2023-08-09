@@ -27,6 +27,45 @@ document.getElementById("getKeywordForm").addEventListener("submit", function(ev
   });
 });
 
+// Add an event listener to the "Search" button for voice-to-text
+document.getElementById("searchVoiceForm").addEventListener("click", function() {
+  const searchText = document.getElementById("search_query").value;
+
+  if (searchText.trim() !== "") {
+      const apiUrl = `https://24x5cq0m0i.execute-api.us-east-1.amazonaws.com/dev/search?q=${encodeURIComponent(searchText)}`;
+      fetch(apiUrl)
+          .then(response => {
+              if (!response.ok) {
+                  throw new Error('Network response was not ok');
+              }
+              return response.json();
+          })
+          .then(data => {
+              if (data['results'].length === 0) {
+                  document.getElementById('no-result-message').innerHTML = "No results found";
+              } else {
+                  // Update the imageList with the search results
+                  var imageList = document.getElementById("imageList");
+                  imageList.innerHTML = '';
+                  for (let i = 0; i < data['results'].length; i++) {
+                      const listItem = document.createElement("li");
+                      const imageElement = document.createElement("img");
+                      imageElement.src = data['results'][i]['url'];
+                      imageElement.alt = "Image";
+                      listItem.appendChild(imageElement);
+                      imageList.appendChild(listItem);
+                  }
+              }
+          })
+          .catch(error => {
+              console.error('API Error:', error);
+          });
+  } else {
+      alert("Please provide a search query.");
+  }
+});
+
+
 // Construct the API URL with the search query as a parameter
 
 // Make the GET request using Fetch API

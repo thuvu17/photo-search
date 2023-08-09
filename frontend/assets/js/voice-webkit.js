@@ -5,34 +5,39 @@ window.SpeechRecognition = window.webkitSpeechRecognition || window.SpeechRecogn
         console.log("SpeechRecognition is Not Working");
     }
 
-    var inputSearchQuery = document.getElementById("search_query");
-    const recognition = new window.SpeechRecognition();
-    //recognition.continuous = true;
+// ... Your other code ...
 
-    micButton = document.getElementById("mic_search");
+var inputSearchQuery = document.getElementById("search_query");
+var recognition = new window.SpeechRecognition();
 
-    micButton.addEventListener('click', function () {
-        if (micButton.innerHTML == "mic") {
-            recognition.start();
-        } else if (micButton.innerHTML == "mic_off") {
-            recognition.stop();
-        }
+var micButton = document.getElementById("mic_search");
+console.log(micButton);
+if (micButton) {
+  micButton.addEventListener('click', function () {
+    if (micButton.innerHTML === "mic") {
+        console.log("recording");
+        recognition.start();
+    } else if (micButton.innerHTML === "mic_off") {
+      recognition.stop();
+    }
+  });
 
-        recognition.addEventListener("start", function () {
-            micButton.innerHTML = "mic_off";
-            console.log("Recording.....");
-        });
+  recognition.addEventListener("start", function () {
+    micButton.innerHTML = "mic_off";
+    console.log("Recording...");
+  });
 
-        recognition.addEventListener("end", function () {
-            console.log("Stopping recording.");
-            micButton.innerHTML = "mic";
-        });
+  recognition.addEventListener("end", function () {
+    console.log("Stopping recording.");
+    micButton.innerHTML = "mic";
+  });
 
-        recognition.addEventListener("result", resultOfSpeechRecognition);
-        function resultOfSpeechRecognition(event) {
-            const current = event.resultIndex;
-            transcript = event.results[current][0].transcript;
-            inputSearchQuery.value = transcript;
-            console.log("transcript : ", transcript)
-        }
-    });
+  recognition.addEventListener("result", resultOfSpeechRecognition);
+
+  function resultOfSpeechRecognition(event) {
+    const current = event.resultIndex;
+    const transcript = event.results[current][0].transcript;
+    inputSearchQuery.value = transcript;
+    console.log("Transcript: ", transcript);
+  }
+}
